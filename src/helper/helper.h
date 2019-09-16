@@ -1,4 +1,5 @@
-static void write_output(void) {
+static void write_output(void)
+{
     // Initialize the target registry etc.
     InitializeAllTargetInfos();
     InitializeAllTargets();
@@ -15,7 +16,8 @@ static void write_output(void) {
     // Print an error and exit if we couldn't find the requested target.
     // This generally occurs if we've forgotten to initialise the
     // TargetRegistry or we have a bogus target triple.
-    if (!Target) {
+    if (!Target)
+    {
         errs() << Error;
         return;
     }
@@ -32,9 +34,10 @@ static void write_output(void) {
 
     auto Filename = "output.o";
     std::error_code EC;
-    raw_fd_ostream dest(Filename, EC, sys::fs::OF_None);
+    raw_fd_ostream dest(Filename, EC, sys::fs::F_None);
 
-    if (EC) {
+    if (EC)
+    {
         errs() << "Could not open file: " << EC.message();
         return;
     }
@@ -42,7 +45,8 @@ static void write_output(void) {
     legacy::PassManager pass;
     auto FileType = TargetMachine::CGFT_ObjectFile;
 
-    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
+    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType))
+    {
         errs() << "TheTargetMachine can't emit a file of this type";
         return;
     }
