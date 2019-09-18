@@ -299,7 +299,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
     std::string identifier = lexer.getIdentifier();
     getNextToken();
 
-    if (CurTok != ')')
+    if (CurTok != '(')
     {
         return llvm::make_unique<VariableExprAST>(std::move(identifier));
     }
@@ -307,7 +307,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
 
     std::vector<std::unique_ptr<ExprAST>> args;
 
-    while (CurTok != '(')
+    while (CurTok != ')')
     {
         auto arg = ParseExpression();
         getNextToken();
