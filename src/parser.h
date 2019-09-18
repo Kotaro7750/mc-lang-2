@@ -212,7 +212,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr()
 
     std::vector<std::unique_ptr<ExprAST>> args;
 
-    while (CurTok != '(')
+    while (CurTok != ')')
     {
         auto arg = ParseExpression();
         getNextToken();
@@ -295,7 +295,30 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
     // 2.2とほぼ同じ。CallExprASTではなくPrototypeASTを返し、
     // 引数同士の区切りが','ではなくgetNextToken()を呼ぶと直ぐに
     // CurTokに次の引数(もしくは')')が入るという違いのみ。
-    return nullptr;
+    //return nullptr;
+    std::string identifier = lexer.getIdentifier();
+    getNextToken();
+
+    if (CurTok != ')')
+    {
+        return llvm::make_unique<VariableExprAST>(std::move(identifier));
+    }
+    getNextToken();
+
+    std::vector<std::unique_ptr<ExprAST>> args;
+
+    while (CurTok != '(')
+    {
+        auto arg = ParseExpression();
+        getNextToken();
+        if (CurTok == ',')
+        {
+            args.push_back(std::move(arg));
+            getNextToken();
+        }
+    }
+    getNextToken();
+    return llvm::make_unique<CallExprAST>(std::move(identifier), std::move(args));
 }
 
 static std::unique_ptr<FunctionAST> ParseDefinition()
