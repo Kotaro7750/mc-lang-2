@@ -19,26 +19,36 @@ static std::map<std::string, Value *> NamedValues;
 
 // https://llvm.org/doxygen/classllvm_1_1Value.html
 // llvm::Valueという、LLVM IRのオブジェクトでありFunctionやModuleなどを構成するクラスを使います
-Value *NumberAST::codegen() {
+Value *NumberAST::codegen()
+{
     // 64bit整数型のValueを返す
     return ConstantInt::get(Context, APInt(64, Val, true));
 }
 
-Value *LogErrorV(const char *str) {
+Value *LogErrorV(const char *str)
+{
     LogError(str);
     return nullptr;
 }
 
 // TODO 2.4: 引数のcodegenを実装してみよう
-Value *VariableExprAST::codegen() {
-    return nullptr;
+Value *VariableExprAST::codegen()
+{
+    //return nullptr;
     // NamedValuesの中にVariableExprAST::NameとマッチするValueがあるかチェックし、
     // あったらそのValueを返す。
     // Look this variable up in the function.
+    std::map<std::string, Value *>::iterator it = NamedValues.find(variableName);
+    if (it != NamedValues.end())
+    {
+        return it->second;
+    }
+    return nullptr;
 }
 
 // TODO 2.5: 関数呼び出しのcodegenを実装してみよう
-Value *CallExprAST::codegen() {
+Value *CallExprAST::codegen()
+{
     return nullptr;
     // 1. myModule->getFunctionを用いてcalleeがdefineされているかを
     // チェックし、されていればそのポインタを得る。
@@ -53,29 +63,32 @@ Value *CallExprAST::codegen() {
     // 4. IRBuilderのCreateCallを呼び出し、Valueをreturnする。
 }
 
-Value *BinaryAST::codegen() {
+Value *BinaryAST::codegen()
+{
     // 二項演算子の両方の引数をllvm::Valueにする。
     Value *L = LHS->codegen();
     Value *R = RHS->codegen();
     if (!L || !R)
         return nullptr;
 
-    switch (Op) {
-        case '+':
-            // LLVM IR Builerを使い、この二項演算のIRを作る
-            return Builder.CreateAdd(L, R, "addtmp");
-            // TODO 1.7: '-'と'*'に対してIRを作ってみよう
-            // 上の行とhttps://llvm.org/doxygen/classllvm_1_1IRBuilder.htmlを参考のこと
-        case '-':
-            return Builder.CreateSub(L, R, "subtmp");
-        case '*':
-            return Builder.CreateMul(L, R, "multmp");
-        default:
-            return LogErrorV("invalid binary operator");
+    switch (Op)
+    {
+    case '+':
+        // LLVM IR Builerを使い、この二項演算のIRを作る
+        return Builder.CreateAdd(L, R, "addtmp");
+        // TODO 1.7: '-'と'*'に対してIRを作ってみよう
+        // 上の行とhttps://llvm.org/doxygen/classllvm_1_1IRBuilder.htmlを参考のこと
+    case '-':
+        return Builder.CreateSub(L, R, "subtmp");
+    case '*':
+        return Builder.CreateMul(L, R, "multmp");
+    default:
+        return LogErrorV("invalid binary operator");
     }
 }
 
-Function *PrototypeAST::codegen() {
+Function *PrototypeAST::codegen()
+{
     // MC言語では変数の型も関数の返り値もintの為、関数の返り値をInt64にする。
     std::vector<Type *> prototype(args.size(), Type::getInt64Ty(Context));
     FunctionType *FT =
@@ -93,7 +106,8 @@ Function *PrototypeAST::codegen() {
     return F;
 }
 
-Function *FunctionAST::codegen() {
+Function *FunctionAST::codegen()
+{
     // この関数が既にModuleに登録されているか確認
     Function *function = myModule->getFunction(proto->getFunctionName());
     // 関数名が見つからなかったら、新しくこの関数のIRクラスを作る。
@@ -112,7 +126,8 @@ Function *FunctionAST::codegen() {
         NamedValues[Arg.getName()] = &Arg;
 
     // 関数のbody(ExprASTから継承されたNumberASTかBinaryAST)をcodegenする
-    if (Value *RetVal = body->codegen()) {
+    if (Value *RetVal = body->codegen())
+    {
         // returnのIRを作る
         Builder.CreateRet(RetVal);
 
@@ -136,49 +151,62 @@ Function *FunctionAST::codegen() {
 
 static std::string streamstr;
 static llvm::raw_string_ostream stream(streamstr);
-static void HandleDefinition() {
-    if (auto FnAST = ParseDefinition()) {
-        if (auto *FnIR = FnAST->codegen()) {
+static void HandleDefinition()
+{
+    if (auto FnAST = ParseDefinition())
+    {
+        if (auto *FnIR = FnAST->codegen())
+        {
             FnIR->print(stream);
         }
-    } else {
+    }
+    else
+    {
         getNextToken();
     }
 }
 
 // その名の通りtop level expressionをcodegenします。例えば、「2+1;3+3;」というファイルが
 // 入力だった場合、この関数は最初の「2+1」をcodegenして返ります。(そしてMainLoopからまだ呼び出されます)
-static void HandleTopLevelExpression() {
+static void HandleTopLevelExpression()
+{
     // ここでテキストファイルを全てASTにします。
-    if (auto FnAST = ParseTopLevelExpr()) {
+    if (auto FnAST = ParseTopLevelExpr())
+    {
         // できたASTをcodegenします。
-        if (auto *FnIR = FnAST->codegen()) {
+        if (auto *FnIR = FnAST->codegen())
+        {
             streamstr = "";
             FnIR->print(stream);
         }
-    } else {
+    }
+    else
+    {
         // エラー
         getNextToken();
     }
 }
 
-static void MainLoop() {
+static void MainLoop()
+{
     myModule = llvm::make_unique<Module>("my cool jit", Context);
-    while (true) {
-        switch (CurTok) {
-            case tok_eof:
-                // ここで最終的なLLVM IRをプリントしています。
-                fprintf(stderr, "%s", stream.str().c_str());
-                return;
-            case tok_def:
-                HandleDefinition();
-                break;
-            case ';': // ';'で始まった場合、無視します
-                getNextToken();
-                break;
-            default:
-                HandleTopLevelExpression();
-                break;
+    while (true)
+    {
+        switch (CurTok)
+        {
+        case tok_eof:
+            // ここで最終的なLLVM IRをプリントしています。
+            fprintf(stderr, "%s", stream.str().c_str());
+            return;
+        case tok_def:
+            HandleDefinition();
+            break;
+        case ';': // ';'で始まった場合、無視します
+            getNextToken();
+            break;
+        default:
+            HandleTopLevelExpression();
+            break;
         }
     }
 }

@@ -303,17 +303,16 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
     //{
     //    //return llvm::make_unique<VariableExprAST>(std::move(identifier));
     //}
-    getNextToken();
 
     std::vector<std::string> args;
 
     while (CurTok != ')')
     {
-        auto arg = ParseExpression();
+        //auto arg = ParseExpression();
         getNextToken();
         if (CurTok != ')')
         {
-            args.push_back(std::to_string(CurTok));
+            args.push_back(lexer.getIdentifier());
         }
     }
     getNextToken();
