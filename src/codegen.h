@@ -49,18 +49,30 @@ Value *VariableExprAST::codegen()
 // TODO 2.5: 関数呼び出しのcodegenを実装してみよう
 Value *CallExprAST::codegen()
 {
-    return nullptr;
+    //return nullptr;
     // 1. myModule->getFunctionを用いてcalleeがdefineされているかを
     // チェックし、されていればそのポインタを得る。
+    Function *function = myModule->getFunction(callee);
+    if(!function){
+      return nullptr;
+    }
 
     // 2. llvm::Function::arg_sizeと実際に渡されたargsのサイズを比べ、
     // サイズが間違っていたらエラーを出力。
     // If argument mismatch error.
+    if(function->arg_size() != args.size()){
+      //error
+      LogErrorV("argument size is invalid");
+    }
 
     std::vector<Value *> argsV;
     // 3. argsをそれぞれcodegenしllvm::Valueにし、argsVにpush_backする。
+    for(int i = 0;i < args.size(); i++){
+      argsV.push_back(args[i]->codegen());
+    }
 
     // 4. IRBuilderのCreateCallを呼び出し、Valueをreturnする。
+    return Builder.CreateCall(function->codegen(),argsV.begin(),argsV.end(),callee.c_str());
 }
 
 Value *BinaryAST::codegen()
