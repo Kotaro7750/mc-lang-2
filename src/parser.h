@@ -299,26 +299,25 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
     std::string identifier = lexer.getIdentifier();
     getNextToken();
 
-    if (CurTok != '(')
-    {
-        return llvm::make_unique<VariableExprAST>(std::move(identifier));
-    }
+    //if (CurTok != '(')
+    //{
+    //    //return llvm::make_unique<VariableExprAST>(std::move(identifier));
+    //}
     getNextToken();
 
-    std::vector<std::unique_ptr<ExprAST>> args;
+    std::vector<std::string> args;
 
     while (CurTok != ')')
     {
         auto arg = ParseExpression();
         getNextToken();
-        if (CurTok == ',')
+        if (CurTok != ')')
         {
-            args.push_back(std::move(arg));
-            getNextToken();
+            args.push_back(std::to_string(CurTok));
         }
     }
     getNextToken();
-    return llvm::make_unique<CallExprAST>(std::move(identifier), std::move(args));
+    return llvm::make_unique<PrototypeAST>(std::move(identifier), std::move(args));
 }
 
 static std::unique_ptr<FunctionAST> ParseDefinition()
