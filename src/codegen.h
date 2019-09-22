@@ -72,7 +72,7 @@ Value *CallExprAST::codegen()
     }
 
     // 4. IRBuilderのCreateCallを呼び出し、Valueをreturnする。
-    return Builder.CreateCall(function->codegen(),argsV.begin(),argsV.end(),callee.c_str());
+    return Builder.CreateCall(function,argsV,"calltmp");
 }
 
 Value *BinaryAST::codegen()

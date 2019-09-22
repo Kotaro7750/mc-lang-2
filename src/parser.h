@@ -215,17 +215,23 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr()
     while (CurTok != ')')
     {
         auto arg = ParseExpression();
-        getNextToken();
-        if (CurTok == ',')
-        {
-            args.push_back(std::move(arg));
-            getNextToken();
+        if(arg){
+          args.push_back(std::move(arg));
+        }else {
+          return nullptr;
         }
+        if(CurTok == ')'){
+          break;
+        }
+
+        if (CurTok != ',')
+        {
+          return LogError("Expected ')' or ',' in argument list");
+        }
+        getNextToken();
     }
     getNextToken();
     return llvm::make_unique<CallExprAST>(std::move(identifier), std::move(args));
-
-    //つめて返す
 }
 
 // ParsePrimary - NumberASTか括弧をパースする関数
@@ -296,25 +302,30 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
     // 引数同士の区切りが','ではなくgetNextToken()を呼ぶと直ぐに
     // CurTokに次の引数(もしくは')')が入るという違いのみ。
     //return nullptr;
+    if (CurTok != tok_identifier)
+        return LogErrorP("Expected function name in prototype");
+
     std::string identifier = lexer.getIdentifier();
     getNextToken();
 
-    //if (CurTok != '(')
-    //{
-    //    //return llvm::make_unique<VariableExprAST>(std::move(identifier));
-    //}
+    if (CurTok != '(')
+        return LogErrorP("Expected '(' in prototype");
 
     std::vector<std::string> args;
+    getNextToken();
 
     while (CurTok != ')')
     {
         //auto arg = ParseExpression();
-        getNextToken();
         if (CurTok != ')')
         {
             args.push_back(lexer.getIdentifier());
+            getNextToken();
         }
     }
+    if (CurTok != ')')
+        return LogErrorP("Expected ')' in prototype");
+
     getNextToken();
     return llvm::make_unique<PrototypeAST>(std::move(identifier), std::move(args));
 }
