@@ -316,7 +316,6 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
 
     while (CurTok != ')')
     {
-        //auto arg = ParseExpression();
         if (CurTok != ')')
         {
             args.push_back(lexer.getIdentifier());
